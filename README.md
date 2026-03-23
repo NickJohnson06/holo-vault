@@ -1,4 +1,4 @@
-# HoloVault -Pokemon Card Binder (Full-Stack)
+# HoloVault - Pokemon Card Binder (Full-Stack)
 
 A full-stack application for managing a digital binder of Pokemon cards, featuring a React frontend and a robust Python/FastAPI backend API.
 
@@ -22,10 +22,12 @@ A full-stack application for managing a digital binder of Pokemon cards, featuri
 
 1. Install frontend dependencies:
    ```bash
+   cd frontend
    npm install
    ```
 2. Start the React development server:
    ```bash
+   cd frontend
    npm run dev
    ```
 3. Open the app in your browser (usually `http://localhost:5173`).
@@ -37,7 +39,7 @@ A full-stack application for managing a digital binder of Pokemon cards, featuri
 ### Phase 1: High-Level Architecture & Backend Setup (In Progress)
 - [x] Initialize Python FastAPI project directory (`/backend`).
 - [x] Configure a PostgreSQL database via Docker.
-- [ ] Define database models (`Users`, `Binders`, `Pages`, `CardSlots`).
+- [x] Define database models (`Users`, `Binders`, `Pages`, `CardSlots`).
 - [ ] Set up Alembic for handling database schema migrations.
 - [ ] Set up Pydantic schemas for data validation.
 
