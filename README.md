@@ -1,6 +1,6 @@
-# Pokemon Card Binder
+# HoloVault -Pokemon Card Binder (Full-Stack)
 
-A frontend React application for managing a digital binder of Pokemon cards.
+A full-stack application for managing a digital binder of Pokemon cards, featuring a React frontend and a robust Python/FastAPI backend API.
 
 ## Features
 
@@ -20,12 +20,46 @@ A frontend React application for managing a digital binder of Pokemon cards.
 
 ## Getting Started
 
-1. Install dependencies:
+1. Install frontend dependencies:
    ```bash
    npm install
    ```
-2. Start the development server:
+2. Start the React development server:
    ```bash
    npm run dev
    ```
 3. Open the app in your browser (usually `http://localhost:5173`).
+4. To spin up the backend database, see the `docker-compose.yml` file and run `docker compose up -d`.
+
+## Development Roadmap & Outlook
+
+
+### Phase 1: High-Level Architecture & Backend Setup (In Progress)
+- [x] Initialize Python FastAPI project directory (`/backend`).
+- [x] Configure a PostgreSQL database via Docker.
+- [ ] Define database models (`Users`, `Binders`, `Pages`, `CardSlots`).
+- [ ] Set up Alembic for handling database schema migrations.
+- [ ] Set up Pydantic schemas for data validation.
+
+### Phase 2: Core API & Cloud Storage Integration 
+- [ ] Build RESTful CRUD endpoints for Binders and Pages.
+- [ ] Implement image upload functionality via AWS S3.
+- [ ] Update frontend to use API instead of IndexedDB.
+
+### Phase 3: Authentication & Security 
+- [ ] Implement User Registration and Login endpoints.
+- [ ] Secure API routes with JWT.
+- [ ] Create frontend login/register screens and auth state.
+
+### Phase 4: Portfolio Polish & Advanced Features
+- [ ] Market & Pricing Integration (eBay/TCGPlayer background tasks).
+- [ ] External Account Connection (OAuth/API).
+- [ ] Pokémon TCG API Integration.
+- [ ] Redis Caching.
+- [ ] Sharing & Social public link endpoints.
+- [ ] WebSockets (Optional).
+
+### Phase 5: CI/CD & Deployment
+- [ ] Containerize FastAPI backend.
+- [ ] GitHub Actions CI setup.
+- [ ] Backend and Frontend deployments.
