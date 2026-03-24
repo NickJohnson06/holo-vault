@@ -40,8 +40,8 @@ A full-stack application for managing a digital binder of Pokemon cards, featuri
 - [x] Initialize Python FastAPI project directory (`/backend`).
 - [x] Configure a PostgreSQL database via Docker.
 - [x] Define database models (`Users`, `Binders`, `Pages`, `CardSlots`).
-- [ ] Set up Alembic for handling database schema migrations.
-- [ ] Set up Pydantic schemas for data validation.
+- [x] Set up Alembic for handling database schema migrations.
+- [x] Set up Pydantic schemas for data validation.
 
 ### Phase 2: Core API & Cloud Storage Integration 
 - [ ] Build RESTful CRUD endpoints for Binders and Pages.
