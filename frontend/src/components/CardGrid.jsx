@@ -7,13 +7,13 @@ export default function CardGrid({ pageIndex, face, images, title, onUpdateSlot,
 
   return (
     <div className="card-grid-container flex flex-col h-full">
-      <div className="card-page-title-container flex justify-center mb-3">
+      <div className="card-page-title-container flex justify-center w-full mb-1">
         <input
           type="text"
           value={title || ''}
           onChange={(e) => onUpdateTitle(pageIndex, face, e.target.value)}
           placeholder={`Page ${face === 'front' ? pageIndex * 2 + 1 : pageIndex * 2 + 2}`}
-          className="text-center bg-transparent border-b border-transparent hover:border-slate-600 focus:border-blue-500 transition-colors text-slate-200 font-semibold text-lg outline-none w-2/3 pb-1"
+          className="text-center mx-auto bg-transparent border-b border-transparent hover:border-slate-600 focus:border-blue-500 transition-colors text-slate-200 font-semibold text-lg outline-none w-full max-w-[80%] pb-1"
         />
       </div>
       <div className="card-grid flex-1">

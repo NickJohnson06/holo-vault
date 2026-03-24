@@ -15,21 +15,19 @@ export const PAGE_ORDER = [
   'darkrai',
   'sinnoh-legendarys',
   'unova-trio',
-  'Fav-Non-Legendarys',
-  'Water',
-  'Fire',
-  'Grass',
-  'Lightning',
-  'Dragon',
-  'Metal',
-  'Psychic',
-  'Darkness',
-  'Colorless',
-  'Trainers'
-
-
-
-
+  'other-duo-trio',
+  'fav-non-legendarys',
+  'water',
+  'fire',
+  'grass',
+  'lightning',
+  'dragon',
+  'metal',
+  'psychic',
+  'darkness',
+  'colorless',
+  'trainers',
+  'items-energy',
 
 ];
 
