@@ -37,31 +37,31 @@ A full-stack application for managing a digital binder of Pokemon cards, featuri
 
 
 ### Phase 1: High-Level Architecture & Backend Setup (In Progress)
-- [x] Initialize Python FastAPI project directory (`/backend`).
-- [x] Configure a PostgreSQL database via Docker.
-- [x] Define database models (`Users`, `Binders`, `Pages`, `CardSlots`).
-- [x] Set up Alembic for handling database schema migrations.
-- [x] Set up Pydantic schemas for data validation.
+- [x] Initialize Python FastAPI project directory (`/backend`)
+- [x] Configure a PostgreSQL database via Docker
+- [x] Define database models (`Users`, `Binders`, `Pages`, `CardSlots`)
+- [x] Set up Alembic for handling database schema migrations
+- [x] Set up Pydantic schemas for data validation
 
 ### Phase 2: Core API & Cloud Storage Integration 
-- [ ] Build RESTful CRUD endpoints for Binders and Pages.
-- [ ] Implement image upload functionality via AWS S3.
-- [ ] Update frontend to use API instead of IndexedDB.
+- [ ] Build RESTful CRUD endpoints for Binders and Pages
+- [ ] Implement image upload functionality via AWS S3
+- [ ] Update frontend to use API instead of IndexedDB
 
 ### Phase 3: Authentication & Security 
-- [ ] Implement User Registration and Login endpoints.
-- [ ] Secure API routes with JWT.
-- [ ] Create frontend login/register screens and auth state.
+- [ ] Implement User Registration and Login endpoints
+- [ ] Secure API routes with JWT
+- [ ] Create frontend login/register screens and auth state
 
 ### Phase 4: Portfolio Polish & Advanced Features
-- [ ] Market & Pricing Integration (eBay/TCGPlayer background tasks).
-- [ ] External Account Connection (OAuth/API).
-- [ ] Pokémon TCG API Integration.
-- [ ] Redis Caching.
-- [ ] Sharing & Social public link endpoints.
-- [ ] WebSockets (Optional).
+- [ ] Market & Pricing Integration (eBay/TCGPlayer background tasks)
+- [ ] External Account Connection (OAuth/API)
+- [ ] Pokémon TCG API Integration
+- [ ] Redis Caching
+- [ ] Sharing & Social public link endpoints
+- [ ] WebSockets
 
 ### Phase 5: CI/CD & Deployment
-- [ ] Containerize FastAPI backend.
-- [ ] GitHub Actions CI setup.
-- [ ] Backend and Frontend deployments.
+- [ ] Containerize FastAPI backend
+- [ ] GitHub Actions CI setup
+- [ ] Backend and Frontend deployments
