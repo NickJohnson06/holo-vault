@@ -44,8 +44,8 @@ A full-stack application for managing a digital binder of Pokemon cards, featuri
 - [x] Set up Pydantic schemas for data validation
 
 ### Phase 2: Core API & Cloud Storage Integration 
-- [ ] Build RESTful CRUD endpoints for Binders and Pages
-- [ ] Implement image upload functionality via AWS S3
+- [x] Build RESTful CRUD endpoints for Binders and Pages
+- [x] Implement image upload functionality via AWS S3
 - [ ] Update frontend to use API instead of IndexedDB
 
 ### Phase 3: Authentication & Security 
