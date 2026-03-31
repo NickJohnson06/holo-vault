@@ -1,77 +1,84 @@
 import { useState, useEffect } from 'react';
-import { get, set } from 'idb-keyval';
+import axios from 'axios';
 import { generateInitialData } from '../utils/initialData';
 
-const BINDER_DB_KEY = 'pokemon_binder_data_v3';
+const API_BASE = 'http://localhost:8000/api/v1';
+const BINDER_ID = 1; // Hardcoded default for single user mode right now
 
-// A single page has 18 slots total (9 on the front, 9 on the back)
-const SLOTS_PER_PAGE = 18;
-
-
-// Function to compress image before saving to DB
-const compressImage = (dataUrl) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 600;
-      const MAX_HEIGHT = 800;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
-        }
-      } else {
-        if (height > MAX_HEIGHT) {
-          width *= MAX_HEIGHT / height;
-          height = MAX_HEIGHT;
-        }
-      }
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', 0.8)); // compressed jpeg
-    };
-    img.src = dataUrl;
-  });
+// Helper to calculate the flat backend page_number based on the frontend structure
+const getBackendPageNumber = (pageIndex, faceOrSlot) => {
+  if (typeof faceOrSlot === 'string') {
+    return pageIndex * 2 + (faceOrSlot === 'front' ? 0 : 1);
+  } else {
+    // faceOrSlot is slotIndex (0-17)
+    return pageIndex * 2 + (faceOrSlot < 9 ? 0 : 1);
+  }
 };
 
-const BINDER_TITLES_DB_KEY = 'pokemon_binder_titles_v3';
+// Maps 0-17 back down to 0-8 for the specific face of the page
+const getBackendSlotIndex = (slotIndex) => {
+  return slotIndex % 9;
+};
 
 export function useBinderState() {
   const [pages, setPages] = useState([]);
-  const [titles, setTitles] = useState([]); // array where index is pageIndex*2 for front, pageIndex*2+1 for back
+  const [titles, setTitles] = useState([]);
+  const [backendPages, setBackendPages] = useState([]); // Array of PageResponse objects cache
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize
   useEffect(() => {
     async function loadData() {
       try {
-        const [data, titlesData] = await Promise.all([
-          get(BINDER_DB_KEY),
-          get(BINDER_TITLES_DB_KEY)
-        ]);
-
-        if (data && Array.isArray(data)) {
-          setPages(data);
-          
-          if (titlesData && Array.isArray(titlesData)) {
-            setTitles(titlesData);
+        // Attempt to fetch the primary binder over the network
+        let binder;
+        try {
+          const res = await axios.get(`${API_BASE}/binders/${BINDER_ID}`);
+          binder = res.data;
+        } catch (err) {
+          if (err.response && err.response.status === 404) {
+            // Create binder safely if it doesn't already exist in PostgreSQL
+            const res = await axios.post(`${API_BASE}/binders/`, { title: "Main Binder" });
+            binder = res.data;
           } else {
-            setTitles([]);
+            throw err;
           }
-        } else {
-          // If no data in DB, seed with initial static assets
+        }
+
+        // Fetch all pages associated with this binder
+        const pagesRes = await axios.get(`${API_BASE}/pages/binder/${BINDER_ID}`);
+        const loadedBackendPages = pagesRes.data;
+        setBackendPages(loadedBackendPages);
+
+        if (loadedBackendPages.length === 0) {
+          // Graceful fallback to local default seeding logic if Backend is pristine 
           const { initialPages, initialTitles } = generateInitialData();
           setPages(initialPages);
           setTitles(initialTitles);
+        } else {
+          // Mathematically transform backend pages into the frontend 18-slot dual layout format
+          const maxPageNum = loadedBackendPages.reduce((max, p) => Math.max(max, p.page_number), 0);
+          const totalFrontendPages = Math.floor(maxPageNum / 2) + 1;
+
+          const newPages = Array.from({ length: totalFrontendPages }, () => Array(18).fill(null));
+          const newTitles = Array((maxPageNum + 1)).fill('');
+
+          loadedBackendPages.forEach(p => {
+             newTitles[p.page_number] = p.title || '';
+             
+             // Map card slots perfectly
+             const frontendPageIndex = Math.floor(p.page_number / 2);
+             const offset = (p.page_number % 2 === 0) ? 0 : 9;
+             p.card_slots.forEach(slot => {
+                newPages[frontendPageIndex][offset + slot.slot_index] = slot.image_url;
+             });
+          });
+
+          setPages(newPages);
+          setTitles(newTitles);
         }
       } catch (err) {
-        console.error('Failed to load binder data from IndexedDB', err);
+        console.warn('Backend API connection failed. Falling back to default static data structure...');
         const { initialPages, initialTitles } = generateInitialData();
         setPages(initialPages);
         setTitles(initialTitles);
@@ -82,80 +89,129 @@ export function useBinderState() {
     loadData();
   }, []);
 
-  const saveToDb = async (newPages) => {
-    setPages(newPages);
-    try {
-      await set(BINDER_DB_KEY, newPages);
-    } catch (err) {
-      console.error('Failed to save binder data to IndexedDB', err);
+  // Helpful guardrail to ensure a backend page object exists before trying to update a slot or title on it
+  const ensureBackendPage = async (page_number) => {
+    let page = backendPages.find(p => p.page_number === page_number);
+    if (!page) {
+      const res = await axios.post(`${API_BASE}/pages/`, {
+        binder_id: BINDER_ID,
+        page_number: page_number,
+        title: ""
+      });
+      page = res.data;
+      setBackendPages(prev => [...prev, page]);
     }
-  };
-
-  const saveTitlesToDb = async (newTitles) => {
-    setTitles(newTitles);
-    try {
-      await set(BINDER_TITLES_DB_KEY, newTitles);
-    } catch (err) {
-      console.error('Failed to save binder titles to IndexedDB', err);
-    }
+    return page;
   };
 
   const updateTitle = async (pageIndex, face, newTitle) => {
-    const titleIndex = face === 'front' ? pageIndex * 2 : pageIndex * 2 + 1;
+    // 1. Optimistic UI update for snappy user experience
+    const titleIndex = getBackendPageNumber(pageIndex, face);
     const newTitles = [...titles];
-    // Grow array if needed
-    while (newTitles.length <= titleIndex) {
-      newTitles.push('');
-    }
+    while (newTitles.length <= titleIndex) newTitles.push('');
     newTitles[titleIndex] = newTitle;
-    await saveTitlesToDb(newTitles);
+    setTitles(newTitles);
+
+    // 2. Perform background API update
+    try {
+      const page = await ensureBackendPage(titleIndex);
+      await axios.put(`${API_BASE}/pages/${page.id}`, { title: newTitle });
+    } catch (err) {
+      console.error('Failed to update title via API', err);
+    }
   };
 
   const updateSlot = async (pageIndex, slotIndex, file) => {
-    // Read file, optionally compress, then set state
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const compressedDataUrl = await compressImage(e.target.result);
-          const newPages = [...pages];
-          newPages[pageIndex] = [...newPages[pageIndex]];
-          newPages[pageIndex][slotIndex] = compressedDataUrl;
-          await saveToDb(newPages);
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    // 1. Upload file securely via form-data directly to S3 endpoint
+    let imageUrl = null;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await axios.post(`${API_BASE}/uploads/image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      // The backend returns the S3 url
+      imageUrl = res.data.url;
+    } catch (err) {
+      console.error('Failed to upload image via Backend S3 API', err);
+      throw err;
+    }
+
+    // 2. Optimistic exact UI update
+    const newPages = [...pages];
+    newPages[pageIndex] = [...newPages[pageIndex]];
+    newPages[pageIndex][slotIndex] = imageUrl;
+    setPages(newPages);
+
+    // 3. Persist the state in the PostgreSQL database automatically
+    try {
+      const pageNum = getBackendPageNumber(pageIndex, slotIndex);
+      const page = await ensureBackendPage(pageNum);
+      const internalSlot = getBackendSlotIndex(slotIndex);
+
+      await axios.put(`${API_BASE}/slots/page/${page.id}/index/${internalSlot}`, {
+        image_url: imageUrl
+      });
+    } catch (err) {
+      console.error('Failed to update relational database slot status via API', err);
+    }
   };
 
   const clearSlot = async (pageIndex, slotIndex) => {
+    // 1. Instantly wipe from Optimistic UI
     const newPages = [...pages];
     newPages[pageIndex] = [...newPages[pageIndex]];
     newPages[pageIndex][slotIndex] = null;
-    await saveToDb(newPages);
+    setPages(newPages);
+
+    // 2. Erase the slot from the backend PostgreSQL securely
+    try {
+      const pageNum = getBackendPageNumber(pageIndex, slotIndex);
+      let page = backendPages.find(p => p.page_number === pageNum);
+      if (page) {
+        const internalSlot = getBackendSlotIndex(slotIndex);
+        await axios.delete(`${API_BASE}/slots/page/${page.id}/index/${internalSlot}`);
+      }
+    } catch (err) {
+      console.error('Failed to delete slot relation via API', err);
+    }
   };
 
   const addPage = async () => {
-    const newPages = [...pages, Array(SLOTS_PER_PAGE).fill(null)];
-    await saveToDb(newPages);
-    // Also add title spots for the new page
+    const newPages = [...pages, Array(18).fill(null)];
+    setPages(newPages);
+    
     const newTitles = [...titles, '', ''];
-    await saveTitlesToDb(newTitles);
+    setTitles(newTitles);
+    
+    // We don't strictly *need* to call the API to create the empty Page,
+    // because ensureBackendPage() will magically handle it when the user assigns a slot.
   };
   
   const removePage = async (pageIndex) => {
     if (pages.length <= 1) return;
+    
     const newPages = pages.filter((_, i) => i !== pageIndex);
-    await saveToDb(newPages);
+    setPages(newPages);
 
-    // Remove titles for front and back (indices pageIndex*2, pageIndex*2+1)
     const newTitles = [...titles];
     newTitles.splice(pageIndex * 2, 2);
-    await saveTitlesToDb(newTitles);
+    setTitles(newTitles);
+
+    // Also completely cascade delete them from the PostgreSQL backend
+    const frontPageNum = pageIndex * 2;
+    const backPageNum = pageIndex * 2 + 1;
+
+    try {
+       const frontPg = backendPages.find(p => p.page_number === frontPageNum);
+       const backPg = backendPages.find(p => p.page_number === backPageNum);
+       if (frontPg) await axios.delete(`${API_BASE}/pages/${frontPg.id}`);
+       if (backPg) await axios.delete(`${API_BASE}/pages/${backPg.id}`);
+       
+       setBackendPages(prev => prev.filter(p => p.page_number !== frontPageNum && p.page_number !== backPageNum));
+    } catch (err) {
+      console.error("Failed to execute cascading delete via API", err);
+    }
   };
 
   return { 
