@@ -12,8 +12,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routers import binders, pages, uploads, card_slots
+from app.routers import binders, pages, uploads, card_slots, auth
 
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(binders.router, prefix="/api/v1")
 app.include_router(pages.router, prefix="/api/v1")
 app.include_router(uploads.router, prefix="/api/v1")
