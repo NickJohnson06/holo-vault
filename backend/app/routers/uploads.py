@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 import uuid
 import datetime
 
+from app import models
 from app.utils.s3 import upload_file_to_s3
+from app.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/uploads",
@@ -10,7 +12,10 @@ router = APIRouter(
 )
 
 @router.post("/image")
-def upload_image(file: UploadFile = File(...)):
+def upload_image(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user)
+):
     """
     Upload an image to AWS S3 and return the public URL.
     Uses UUID to ensure unique filenames.

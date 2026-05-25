@@ -34,7 +34,7 @@ class PageBase(BaseModel):
     title: Optional[str] = None
 
 class PageCreate(PageBase):
-    pass # Binder ID is typically derived from the url path, but can be added here if needed
+    binder_id: int
 
 class PageUpdate(BaseModel):
     title: Optional[str] = None

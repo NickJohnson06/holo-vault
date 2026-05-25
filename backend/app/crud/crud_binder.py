@@ -7,6 +7,9 @@ def get_binder(db: Session, binder_id: int):
 def get_binders(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Binder).offset(skip).limit(limit).all()
 
+def get_user_binders(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Binder).filter(models.Binder.owner_id == owner_id).offset(skip).limit(limit).all()
+
 def create_binder(db: Session, binder: schemas.BinderCreate, owner_id: int):
     # Pass owner_id as well since it's required by the Binder model
     db_binder = models.Binder(**binder.model_dump(), owner_id=owner_id)
