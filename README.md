@@ -51,7 +51,7 @@ A full-stack application for managing a digital binder of Pokemon cards, featuri
 ### Phase 3: Authentication & Security 
 - [x] Implement User Registration and Login endpoints
 - [x] Secure API routes with JWT
-- [ ] Create frontend login/register screens and auth state
+- [x] Create frontend login/register screens and auth state
 
 ### Phase 4: Portfolio Polish & Advanced Features
 - [ ] Market & Pricing Integration (eBay/TCGPlayer background tasks)

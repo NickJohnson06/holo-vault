@@ -3,7 +3,6 @@ import axios from 'axios';
 import { generateInitialData } from '../utils/initialData';
 
 const API_BASE = 'http://localhost:8000/api/v1';
-const BINDER_ID = 1; // Hardcoded default for single user mode right now
 
 // Helper to calculate the flat backend page_number based on the frontend structure
 const getBackendPageNumber = (pageIndex, faceOrSlot) => {
@@ -20,38 +19,54 @@ const getBackendSlotIndex = (slotIndex) => {
   return slotIndex % 9;
 };
 
-export function useBinderState() {
+export function useBinderState(user) {
   const [pages, setPages] = useState([]);
   const [titles, setTitles] = useState([]);
+  const [binderId, setBinderId] = useState(null); // Dynamic binder ID based on logged in user
   const [backendPages, setBackendPages] = useState([]); // Array of PageResponse objects cache
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize
+  // Initialize and load data based on the logged-in user
   useEffect(() => {
+    if (!user) {
+      setPages([]);
+      setTitles([]);
+      setBackendPages([]);
+      setBinderId(null);
+      setIsLoading(true);
+      return;
+    }
+
     async function loadData() {
+      setIsLoading(true);
       try {
-        // Attempt to fetch the primary binder over the network
-        let binder;
-        try {
-          const res = await axios.get(`${API_BASE}/binders/${BINDER_ID}`);
-          binder = res.data;
-        } catch (err) {
-          if (err.response && err.response.status === 404) {
-            // Create binder safely if it doesn't already exist in PostgreSQL
-            const res = await axios.post(`${API_BASE}/binders/`, { title: "Main Binder" });
-            binder = res.data;
-          } else {
-            throw err;
-          }
+        // 1. Fetch binders owned by the current user
+        const bindersRes = await axios.get(`${API_BASE}/binders/`);
+        const binders = bindersRes.data;
+        let activeBinder;
+
+        if (binders.length === 0) {
+          // If no binders exist for this user, create a default binder
+          const createRes = await axios.post(`${API_BASE}/binders/`, {
+            title: "My Pokémon Binder",
+            description: "Collection manager"
+          });
+          activeBinder = createRes.data;
+        } else {
+          // Use the user's first binder
+          activeBinder = binders[0];
         }
 
-        // Fetch all pages associated with this binder
-        const pagesRes = await axios.get(`${API_BASE}/pages/binder/${BINDER_ID}`);
+        const activeBinderId = activeBinder.id;
+        setBinderId(activeBinderId);
+
+        // 2. Fetch all pages associated with this specific binder
+        const pagesRes = await axios.get(`${API_BASE}/pages/binder/${activeBinderId}`);
         const loadedBackendPages = pagesRes.data;
         setBackendPages(loadedBackendPages);
 
         if (loadedBackendPages.length === 0) {
-          // Graceful fallback to local default seeding logic if Backend is pristine 
+          // Graceful fallback to local default seeding if binder has no pages
           const { initialPages, initialTitles } = generateInitialData();
           setPages(initialPages);
           setTitles(initialTitles);
@@ -78,7 +93,7 @@ export function useBinderState() {
           setTitles(newTitles);
         }
       } catch (err) {
-        console.warn('Backend API connection failed. Falling back to default static data structure...');
+        console.warn('Backend API connection failed. Falling back to default static data structure...', err);
         const { initialPages, initialTitles } = generateInitialData();
         setPages(initialPages);
         setTitles(initialTitles);
@@ -87,14 +102,16 @@ export function useBinderState() {
       }
     }
     loadData();
-  }, []);
+  }, [user]);
 
-  // Helpful guardrail to ensure a backend page object exists before trying to update a slot or title on it
+  // Ensure a backend page object exists before trying to update a slot or title on it
   const ensureBackendPage = async (page_number) => {
+    if (!binderId) throw new Error("No active binder ID allocated.");
+    
     let page = backendPages.find(p => p.page_number === page_number);
     if (!page) {
       const res = await axios.post(`${API_BASE}/pages/`, {
-        binder_id: BINDER_ID,
+        binder_id: binderId,
         page_number: page_number,
         title: ""
       });
@@ -122,7 +139,7 @@ export function useBinderState() {
   };
 
   const updateSlot = async (pageIndex, slotIndex, file) => {
-    // 1. Upload file securely via form-data directly to S3 endpoint
+    // 1. Upload file securely via form-data directly to protected S3 endpoint
     let imageUrl = null;
     try {
       const formData = new FormData();
@@ -130,7 +147,6 @@ export function useBinderState() {
       const res = await axios.post(`${API_BASE}/uploads/image`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      // The backend returns the S3 url
       imageUrl = res.data.url;
     } catch (err) {
       console.error('Failed to upload image via Backend S3 API', err);
@@ -183,9 +199,6 @@ export function useBinderState() {
     
     const newTitles = [...titles, '', ''];
     setTitles(newTitles);
-    
-    // We don't strictly *need* to call the API to create the empty Page,
-    // because ensureBackendPage() will magically handle it when the user assigns a slot.
   };
   
   const removePage = async (pageIndex) => {
@@ -209,9 +222,9 @@ export function useBinderState() {
        if (backPg) await axios.delete(`${API_BASE}/pages/${backPg.id}`);
        
        setBackendPages(prev => prev.filter(p => p.page_number !== frontPageNum && p.page_number !== backPageNum));
-    } catch (err) {
-      console.error("Failed to execute cascading delete via API", err);
-    }
+     } catch (err) {
+       console.error("Failed to execute cascading delete via API", err);
+     }
   };
 
   return { 
