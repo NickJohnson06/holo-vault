@@ -1,11 +1,13 @@
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+# pyrefly: ignore [missing-import]
+from fastapi.middleware import cors
 
 app = FastAPI(title="Holo Vault API", version="1.0.0")
 
 # Setup CORS for the React frontend
 app.add_middleware(
-    CORSMiddleware,
+    cors.CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -19,6 +21,11 @@ app.include_router(binders.router, prefix="/api/v1")
 app.include_router(pages.router, prefix="/api/v1")
 app.include_router(uploads.router, prefix="/api/v1")
 app.include_router(card_slots.router, prefix="/api/v1")
+
+@app.on_event("startup")
+def startup_event():
+    from app.workers import start_background_workers
+    start_background_workers()
 
 @app.get("/")
 def read_root():

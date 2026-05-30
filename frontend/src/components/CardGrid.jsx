@@ -1,7 +1,7 @@
 import Card from './Card';
 import './CardGrid.css';
 
-export default function CardGrid({ pageIndex, face, images, title, onUpdateSlot, onClearSlot, onUpdateTitle }) {
+export default function CardGrid({ pageIndex, face, images, title, onUpdateSlot, onClearSlot, onUpdateTitle, onEditDetails }) {
   // face is 'front' (indices 0-8) or 'back' (indices 9-17)
   const offset = face === 'front' ? 0 : 9;
 
@@ -19,13 +19,14 @@ export default function CardGrid({ pageIndex, face, images, title, onUpdateSlot,
       <div className="card-grid flex-1">
         {Array.from({ length: 9 }).map((_, i) => {
           const slotIndex = offset + i;
-          const img = images ? images[slotIndex] : null;
+          const card = images ? images[slotIndex] : null;
           return (
             <Card 
               key={slotIndex} 
-              image={img} 
+              card={card} 
               onUpload={(file) => onUpdateSlot(pageIndex, slotIndex, file)}
               onClear={() => onClearSlot(pageIndex, slotIndex)}
+              onEditDetails={() => onEditDetails(pageIndex, slotIndex)}
             />
           );
         })}

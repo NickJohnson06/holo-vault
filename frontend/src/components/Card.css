@@ -4,7 +4,7 @@
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -13,7 +13,7 @@
 }
 
 .card:hover {
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-5px) scale(1.03);
 }
 
 .card-empty {
@@ -22,7 +22,7 @@
 }
 
 .card-empty:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.08);
   border-color: rgba(59, 130, 246, 0.5);
 }
 
@@ -57,32 +57,88 @@
   display: block;
 }
 
-.card-clear-btn {
+/* Card Actions Overlay (Pencil/Edit & Delete) */
+.card-action-overlay {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(239, 68, 68, 0.8);
-  color: white;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+}
+
+.card:hover .card-action-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-clear-btn, .card-edit-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+  color: white;
 }
 
-.card-filled:hover .card-clear-btn {
-  opacity: 1;
-  transform: scale(1);
+.card-clear-btn {
+  background: rgba(239, 68, 68, 0.85);
 }
 
 .card-clear-btn:hover {
   background: rgba(220, 38, 38, 1);
+  transform: scale(1.05);
+}
+
+.card-edit-btn {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-edit-btn:hover {
+  background: rgba(59, 130, 246, 0.9);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: scale(1.05);
+}
+
+/* Holographic Valuation Price Badge */
+.card-price-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25), inset 0 0 6px rgba(16, 185, 129, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #34d399;
+  pointer-events: none;
+  z-index: 10;
+  animation: pricePulse 2.5s infinite ease-in-out;
+}
+
+@keyframes pricePulse {
+  0%, 100% {
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+    border-color: rgba(16, 185, 129, 0.7);
+  }
 }

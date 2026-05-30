@@ -41,6 +41,7 @@
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 60%, #3b82f6 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -117,6 +118,7 @@
   .logout-btn span {
     display: none;
   }
+
   .logout-btn {
     padding: 0.375rem;
     border-radius: 50%;

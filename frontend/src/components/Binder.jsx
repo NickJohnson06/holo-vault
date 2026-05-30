@@ -3,7 +3,7 @@ import CardGrid from './CardGrid';
 import { ChevronLeft, ChevronRight, PlusCircle, Trash2 } from 'lucide-react';
 import './Binder.css';
 
-export default function Binder({ pages, titles, onUpdateSlot, onClearSlot, onAddPage, onRemovePage, onUpdateTitle }) {
+export default function Binder({ pages, titles, onUpdateSlot, onClearSlot, onAddPage, onRemovePage, onUpdateTitle, onEditDetails }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState('next'); // 'next' or 'prev'
@@ -50,6 +50,7 @@ export default function Binder({ pages, titles, onUpdateSlot, onClearSlot, onAdd
         onUpdateTitle={onUpdateTitle}
         onUpdateSlot={onUpdateSlot}
         onClearSlot={onClearSlot}
+        onEditDetails={onEditDetails}
       />
     );
   };
@@ -71,6 +72,7 @@ export default function Binder({ pages, titles, onUpdateSlot, onClearSlot, onAdd
         onUpdateTitle={onUpdateTitle}
         onUpdateSlot={onUpdateSlot}
         onClearSlot={onClearSlot}
+        onEditDetails={onEditDetails}
       />
     );
   };

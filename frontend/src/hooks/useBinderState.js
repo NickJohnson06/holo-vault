@@ -67,8 +67,14 @@ export function useBinderState(user) {
 
         if (loadedBackendPages.length === 0) {
           // Graceful fallback to local default seeding if binder has no pages
-          const { initialPages, initialTitles } = generateInitialData();
-          setPages(initialPages);
+          const { initialPages: seededUrls, initialTitles } = generateInitialData();
+          
+          // Seed as structured card slot objects
+          const seededPages = seededUrls.map(pageArr => 
+            pageArr.map(url => url ? { image_url: url, name: "", set_name: "", market_price: null } : null)
+          );
+          
+          setPages(seededPages);
           setTitles(initialTitles);
         } else {
           // Mathematically transform backend pages into the frontend 18-slot dual layout format
@@ -81,11 +87,17 @@ export function useBinderState(user) {
           loadedBackendPages.forEach(p => {
              newTitles[p.page_number] = p.title || '';
              
-             // Map card slots perfectly
+             // Map card slots perfectly as objects
              const frontendPageIndex = Math.floor(p.page_number / 2);
              const offset = (p.page_number % 2 === 0) ? 0 : 9;
              p.card_slots.forEach(slot => {
-                newPages[frontendPageIndex][offset + slot.slot_index] = slot.image_url;
+                newPages[frontendPageIndex][offset + slot.slot_index] = {
+                  image_url: slot.image_url,
+                  name: slot.name || "",
+                  set_name: slot.set_name || "",
+                  market_price: slot.market_price,
+                  tcg_id: slot.tcg_id
+                };
              });
           });
 
@@ -94,8 +106,11 @@ export function useBinderState(user) {
         }
       } catch (err) {
         console.warn('Backend API connection failed. Falling back to default static data structure...', err);
-        const { initialPages, initialTitles } = generateInitialData();
-        setPages(initialPages);
+        const { initialPages: seededUrls, initialTitles } = generateInitialData();
+        const seededPages = seededUrls.map(pageArr => 
+          pageArr.map(url => url ? { image_url: url, name: "", set_name: "", market_price: null } : null)
+        );
+        setPages(seededPages);
         setTitles(initialTitles);
       } finally {
         setIsLoading(false);
@@ -139,7 +154,7 @@ export function useBinderState(user) {
   };
 
   const updateSlot = async (pageIndex, slotIndex, file) => {
-    // 1. Upload file securely via form-data directly to protected S3 endpoint
+    // 1. Upload file securely via protected S3 endpoint
     let imageUrl = null;
     try {
       const formData = new FormData();
@@ -153,10 +168,14 @@ export function useBinderState(user) {
       throw err;
     }
 
-    // 2. Optimistic exact UI update
+    // 2. Optimistic UI update (preserves existing name/details if any)
     const newPages = [...pages];
     newPages[pageIndex] = [...newPages[pageIndex]];
-    newPages[pageIndex][slotIndex] = imageUrl;
+    const existingSlot = newPages[pageIndex][slotIndex] || {};
+    newPages[pageIndex][slotIndex] = {
+      ...existingSlot,
+      image_url: imageUrl
+    };
     setPages(newPages);
 
     // 3. Persist the state in the PostgreSQL database automatically
@@ -165,11 +184,101 @@ export function useBinderState(user) {
       const page = await ensureBackendPage(pageNum);
       const internalSlot = getBackendSlotIndex(slotIndex);
 
-      await axios.put(`${API_BASE}/slots/page/${page.id}/index/${internalSlot}`, {
+      const res = await axios.put(`${API_BASE}/slots/page/${page.id}/index/${internalSlot}`, {
         image_url: imageUrl
+      });
+      
+      const updatedSlot = res.data;
+      setPages(prev => {
+        const next = [...prev];
+        next[pageIndex] = [...next[pageIndex]];
+        next[pageIndex][slotIndex] = {
+          image_url: updatedSlot.image_url,
+          name: updatedSlot.name || "",
+          set_name: updatedSlot.set_name || "",
+          market_price: updatedSlot.market_price,
+          tcg_id: updatedSlot.tcg_id
+        };
+        return next;
       });
     } catch (err) {
       console.error('Failed to update relational database slot status via API', err);
+    }
+  };
+
+  const updateCardDetails = async (pageIndex, slotIndex, name, setName) => {
+    // 1. Optimistic UI update
+    const newPages = [...pages];
+    newPages[pageIndex] = [...newPages[pageIndex]];
+    const existingSlot = newPages[pageIndex][slotIndex] || {};
+    newPages[pageIndex][slotIndex] = {
+      ...existingSlot,
+      name: name,
+      set_name: setName
+    };
+    setPages(newPages);
+
+    // 2. Persist details in database
+    try {
+      const pageNum = getBackendPageNumber(pageIndex, slotIndex);
+      const page = await ensureBackendPage(pageNum);
+      const internalSlot = getBackendSlotIndex(slotIndex);
+
+      const res = await axios.put(`${API_BASE}/slots/page/${page.id}/index/${internalSlot}`, {
+        name: name,
+        set_name: setName
+      });
+      
+      const updatedSlot = res.data;
+      setPages(prev => {
+        const next = [...prev];
+        next[pageIndex] = [...next[pageIndex]];
+        next[pageIndex][slotIndex] = {
+          image_url: updatedSlot.image_url,
+          name: updatedSlot.name || "",
+          set_name: updatedSlot.set_name || "",
+          market_price: updatedSlot.market_price,
+          tcg_id: updatedSlot.tcg_id
+        };
+        return next;
+      });
+
+      // 3. Polled/Deferred Refresh: Because pricing runs in the background, we query the resolved price after 2 seconds
+      setTimeout(async () => {
+        if (!binderId) return;
+        try {
+          const resRefresh = await axios.get(`${API_BASE}/pages/binder/${binderId}`);
+          const loadedBackendPages = resRefresh.data;
+          setBackendPages(loadedBackendPages);
+          
+          setPages(prev => {
+            const next = [...prev];
+            loadedBackendPages.forEach(p => {
+              const fPageIndex = Math.floor(p.page_number / 2);
+              if (fPageIndex === pageIndex) {
+                const offset = (p.page_number % 2 === 0) ? 0 : 9;
+                p.card_slots.forEach(s => {
+                  if (offset + s.slot_index === slotIndex) {
+                    next[pageIndex][slotIndex] = {
+                      image_url: s.image_url,
+                      name: s.name || "",
+                      set_name: s.set_name || "",
+                      market_price: s.market_price,
+                      tcg_id: s.tcg_id
+                    };
+                  }
+                });
+              }
+            });
+            return next;
+          });
+        } catch (refreshErr) {
+          console.warn("pricing sweep polling refresh deferred failure: ", refreshErr);
+        }
+      }, 2000);
+
+    } catch (err) {
+      console.error('Failed to update card details via API', err);
     }
   };
 
@@ -232,7 +341,8 @@ export function useBinderState(user) {
     titles,
     isLoading, 
     updateTitle,
-    updateSlot, 
+    updateSlot,
+    updateCardDetails,
     clearSlot, 
     addPage, 
     removePage 

@@ -1,13 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Binder from './components/Binder';
 import AuthScreen from './components/AuthScreen';
 import Header from './components/Header';
+import CardDetailsModal from './components/CardDetailsModal';
 import { useAuth } from './hooks/useAuth';
 import { useBinderState } from './hooks/useBinderState';
 
 function App() {
   const { user, loading: authLoading, error, login, register, logout, setError } = useAuth();
-  const { pages, titles, isLoading: binderLoading, updateTitle, updateSlot, clearSlot, addPage, removePage } = useBinderState(user);
+  const { 
+    pages, 
+    titles, 
+    isLoading: binderLoading, 
+    updateTitle, 
+    updateSlot, 
+    updateCardDetails, 
+    clearSlot, 
+    addPage, 
+    removePage 
+  } = useBinderState(user);
+
+  // Modal State for editing card details (metadata)
+  const [editingCard, setEditingCard] = useState(null);
+
+  const handleEditDetails = (pageIndex, slotIndex) => {
+    setEditingCard({
+      pageIndex,
+      slotIndex,
+      card: pages[pageIndex][slotIndex]
+    });
+  };
 
   if (authLoading) {
     return (
@@ -49,9 +71,20 @@ function App() {
                 onClearSlot={clearSlot}
                 onAddPage={addPage}
                 onRemovePage={removePage}
+                onEditDetails={handleEditDetails}
               />
             )}
           </main>
+
+          {editingCard && (
+            <CardDetailsModal
+              card={editingCard.card}
+              onSave={(name, setName) => {
+                updateCardDetails(editingCard.pageIndex, editingCard.slotIndex, name, setName);
+              }}
+              onClose={() => setEditingCard(null)}
+            />
+          )}
         </>
       )}
 
