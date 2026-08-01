@@ -54,8 +54,8 @@ A full-stack application for managing a digital binder of Pokemon cards, featuri
 - [x] Create frontend login/register screens and auth state
 
 ### Phase 4: Portfolio Polish & Advanced Features
-- [ ] Market & Pricing Integration (eBay/TCGPlayer background tasks)
-- [ ] External Account Connection (OAuth/API)
+- [x] Market & Pricing Integration (eBay/TCGPlayer background tasks)
+- [x] External Account Connection (OAuth/API)
 - [ ] Pokémon TCG API Integration
 - [ ] Redis Caching
 - [ ] Sharing & Social public link endpoints

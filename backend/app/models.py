@@ -1,5 +1,8 @@
+# pyrefly: ignore [missing-import]
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Float
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import relationship
+# pyrefly: ignore [missing-import]
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -14,6 +17,7 @@ class User(Base):
 
     # A user can have many binders
     binders = relationship("Binder", back_populates="owner", cascade="all, delete-orphan")
+    oauth_connections = relationship("UserOAuthConnection", back_populates="user", cascade="all, delete-orphan")
 
 
 class Binder(Base):
@@ -70,3 +74,19 @@ class CardSlot(Base):
 
     # Relationship back to the page
     page = relationship("Page", back_populates="card_slots")
+
+
+class UserOAuthConnection(Base):
+    __tablename__ = "user_oauth_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String(50), nullable=False)  # 'google' or 'github'
+    provider_user_id = Column(String(100), nullable=False)
+    provider_email = Column(String(100), nullable=True)
+    provider_username = Column(String(100), nullable=True)
+    access_token = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship back to the user
+    user = relationship("User", back_populates="oauth_connections")

@@ -1,7 +1,7 @@
-import { Sparkles, User, LogOut } from 'lucide-react';
+import { Sparkles, User, LogOut, Settings } from 'lucide-react';
 import './Header.css';
 
-export default function Header({ username, onLogout }) {
+export default function Header({ username, onLogout, onOpenSettings }) {
   return (
     <header className="app-header glass-panel">
       <div className="header-brand">
@@ -19,6 +19,11 @@ export default function Header({ username, onLogout }) {
           <span className="user-name">{username}</span>
         </div>
 
+        <button onClick={onOpenSettings} className="settings-btn" title="Account Settings">
+          <Settings size={16} className="settings-icon" />
+          <span>Settings</span>
+        </button>
+
         <button onClick={onLogout} className="logout-btn" title="Sign Out">
           <LogOut size={16} className="logout-icon" />
           <span>Sign Out</span>
@@ -27,3 +32,4 @@ export default function Header({ username, onLogout }) {
     </header>
   );
 }
+

@@ -82,3 +82,11 @@ class UserResponse(UserBase):
     binders: List[BinderResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OAuthConnectionResponse(BaseModel):
+    provider: str
+    connected: bool
+    email: Optional[str] = None
+    username: Optional[str] = None
+

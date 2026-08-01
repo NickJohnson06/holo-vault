@@ -235,3 +235,85 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin: 1.5rem 0;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.oauth-divider:not(:empty)::before {
+  margin-right: .75em;
+}
+
+.oauth-divider:not(:empty)::after {
+  margin-left: .75em;
+}
+
+.oauth-buttons {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.oauth-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.oauth-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.oauth-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.oauth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.oauth-icon {
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+}
+
+.google-btn:hover:not(:disabled) {
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.github-btn:hover:not(:disabled) {
+  color: #f3f4f6;
+  border-color: rgba(243, 244, 246, 0.3);
+  background: rgba(243, 244, 246, 0.05);
+}
+

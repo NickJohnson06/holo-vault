@@ -80,6 +80,18 @@ export function useAuth() {
     }
   };
 
+  const handleOAuthLogin = (token, username, userId) => {
+    localStorage.setItem('hv_token', token);
+    localStorage.setItem('hv_username', username);
+    localStorage.setItem('hv_user_id', userId.toString());
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setUser({
+      token,
+      username,
+      id: parseInt(userId, 10),
+    });
+  };
+
   const logout = () => {
     localStorage.removeItem('hv_token');
     localStorage.removeItem('hv_username');
@@ -97,6 +109,8 @@ export function useAuth() {
     login,
     register,
     logout,
-    setError
+    setError,
+    handleOAuthLogin
   };
 }
+
